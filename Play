@@ -60,3 +60,52 @@
   </script>
 </body>
 </html>
+
+const express = require('express');
+const app = express();
+const cors = require('cors');
+const { ethers } = require('ethers');
+
+app.use(cors());
+app.use(express.json());
+
+const users = {}; // In-memory storage
+
+const provider = new ethers.JsonRpcProvider("https://mainnet.infura.io/v3/YOUR_INFURA_KEY");
+const wallet = new ethers.Wallet("YOUR_PRIVATE_KEY", provider);
+const tokenAddress = "0xYourDOVAZOLTokenAddress";
+const tokenAbi = [
+  "function transfer(address to, uint amount) public returns (bool)",
+];
+const tokenContract = new ethers.Contract(tokenAddress, tokenAbi, wallet);
+
+app.get('/api/balance/:id', (req, res) => {
+  const id = req.params.id;
+  if (!users[id]) users[id] = { balance: 0 };
+  res.json({ balance: users[id].balance });
+});
+
+app.post('/api/claim', (req, res) => {
+  const { userId } = req.body;
+  if (!users[userId]) users[userId] = { balance: 0 };
+  users[userId].balance += 10; // 10 DOVAZOL per tap
+  res.sendStatus(200);
+});
+
+app.post('/api/withdraw', async (req, res) => {
+  const { userId, wallet: userWallet } = req.body;
+  if (!users[userId] || users[userId].balance === 0) return res.status(400).send("No balance");
+
+  const amount = users[userId].balance;
+
+  try {
+    const tx = await tokenContract.transfer(userWallet, ethers.parseUnits(amount.toString(), 18));
+    await tx.wait();
+    users[userId].balance = 0;
+    res.send("Withdrawal successful! TX: " + tx.hash);
+  } catch (err) {
+    res.status(500).send("Transfer failed: " + err.message);
+  }
+});
+
+app.listen(3000, () => console.log('
