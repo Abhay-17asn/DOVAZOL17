@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TimeTrust Airdrop - DOVAZOL</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #0a0a23; color: white; text-align: center; }
+    .container { padding: 20px; }
+    button { padding: 12px 24px; background: #28a745; color: white; border: none; margin: 10px; border-radius: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 TimeTrust Airdrop</h1>
+    <h2>Token: DOVAZOL</h2>
+    <p>Your Balance: <span id="balance">Loading...</span> DOVAZOL</p>
+    <button onclick="claimTokens()">📲 Tap to Earn</button>
+    <button onclick="withdrawTokens()">💸 Withdraw to Wallet</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    const user = tg.initDataUnsafe.user;
+    const userId = user.id;
+
+    async function updateBalance() {
+      const res = await fetch(`/api/balance/${userId}`);
+      const data = await res.json();
+      document.getElementById("balance").textContent = data.balance;
+    }
+
+    async function claimTokens() {
+      await fetch('/api/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      updateBalance();
+    }
+
+    async function withdrawTokens() {
+      const wallet = prompt("Enter your wallet address:");
+      if (wallet) {
+        const res = await fetch('/api/withdraw', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, wallet })
+        });
+        const msg = await res.text();
+        alert(msg);
+        updateBalance();
+      }
+    }
+
+    updateBalance();
+  </script>
+</body>
+</html>
