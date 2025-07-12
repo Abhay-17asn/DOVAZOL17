@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOVAZOL Airdrop - TimeTrust</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #121212; color: white; text-align: center; }
+    .container { padding: 20px; }
+    button { padding: 12px 24px; background: #4CAF50; color: white; border: none; margin: 10px; border-radius: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔥 TimeTrust - DOVAZOL Airdrop</h1>
+    <p>Welcome, <span id="username">User</span></p>
+    <p>Balance: <span id="balance">Loading...</span> DOVAZOL</p>
+
+    <button onclick="claimTokens()">👆 Tap to Mine</button>
+    <button onclick="withdrawTokens()">💸 Withdraw</button>
+    <button onclick="activateBoost()">⚡ Activate Boost</button>
+    <button onclick="completeTask()">📝 Complete Task</button>
+
+    <div class="refer">
+      <h3>👥 Referral</h3>
+      <input id="refLink" style="width: 100%;" readonly />
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    const user = tg.initDataUnsafe.user;
+    const userId = user.id;
+    document.getElementById("username").textContent = user.first_name;
+    document.getElementById("refLink").value = `https://t.me/TimeTrustBot?start=${userId}`;
+
+    async function updateBalance() {
+      const res = await fetch(`/api/balance/${userId}`);
+      const data = await res.json();
+      document.getElementById("balance").textContent = data.balance;
+    }
+
+    async function claimTokens() {
+      await fetch('/api/claim', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      updateBalance();
+    }
+
+    async function withdrawTokens() {
+      const wallet = prompt("Enter your wallet address:");
+      if (wallet) {
+        const res = await fetch('/api/withdraw', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, wallet })
+        });
+        const msg = await res.text();
+        alert(msg);
+        updateBalance();
+      }
+    }
+
+    async function activateBoost() {
+      await fetch('/api/boost', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      alert("Boost activated!");
+    }
+
+    async function completeTask() {
+      await fetch('/api/task', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      updateBalance();
+    }
+
+    updateBalance();
+  </script>
+</body>
+</html>
